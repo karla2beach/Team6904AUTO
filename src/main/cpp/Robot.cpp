@@ -22,6 +22,8 @@
 #include "frc/smartdashboard/Smartdashboard.h"
 #include "networktables/NetworkTable.h"
 #include "networktables/NetworkTableInstance.h"
+#include <frc/AddressableLED.h>
+#include <array>
 
 /**
  * This is a sample program showing the use of the solenoid classes during
@@ -58,7 +60,18 @@ class Robot : public frc::TimedRobot {
 	int autoLoopCounter;
   bool autoEnable;
   frc::Timer m_timer;
- 
+  
+   static constexpr int kLength = 5;
+
+  // PWM port 9
+  // Must be a PWM header, not MXP or DIO
+  frc::AddressableLED m_led{9};
+  std::array<frc::AddressableLED::LEDData, kLength>
+      m_ledBuffer;  // Reuse the buffer
+  // Store what the last hue of the first pixel is
+  int firstPixelHue = 0;
+
+
  public:
   void RobotInit() {
 //		frc::CameraServer::GetInstance()->StartAutomaticCapture();
@@ -78,17 +91,30 @@ class Robot : public frc::TimedRobot {
     // Default Auto goes here
   }  */
 
-  frc::Timer m_timer;
   m_timer.Reset();
+  m_timer.Start();
+
+   m_ledBuffer[0].SetHSV(0, 255, 0);
+    m_ledBuffer[1].SetHSV(40, 255, 0);
+    m_ledBuffer[2].SetHSV(0, 255, 16);
+    m_ledBuffer[3].SetHSV(40, 255, 0);
+    m_ledBuffer[4].SetHSV(0, 255, 0);
+    m_led.SetLength(kLength);
+    m_led.SetData(m_ledBuffer);
+    m_led.Start();
+
 }
 
   void AutonomousPeriodic() override{
     //m_robotDrive.ArcadeDrive(.5,0);
-    if (m_timer.Get() < .5 ) {
+    if (m_timer.Get() < 2 ) {
      m_robotDrive.ArcadeDrive(.5,0);
+     m_ledBuffer[2].SetHSV(0, 255, 16);
     }
-    else if (m_timer.Get() < 1){
+    else if (m_timer.Get() < 10){
      m_robotDrive.ArcadeDrive(.5,.5);
+      m_ledBuffer[2].SetHSV(20, 255, 16);
+      
     }
     else
     {
@@ -96,7 +122,7 @@ class Robot : public frc::TimedRobot {
       /* code */
     }
     
-
+  m_led.SetData(m_ledBuffer);
   /* The output of GetRawButton is true/false depending on whether the button
      * is pressed; Set takes a boolean for for whether to use the default
      * (false) channel or the other (true).
